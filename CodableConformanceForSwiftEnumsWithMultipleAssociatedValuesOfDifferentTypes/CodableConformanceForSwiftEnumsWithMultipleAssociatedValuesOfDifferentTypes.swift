@@ -86,9 +86,7 @@ extension ViewState: Decodable {
         case .list:
             
             // decoding multiple values using the extension to KeyedDecodingContainer
-            let (selectedId, expandedItems): (UUID, [Item]) = try container.decodeValues(for: .list)
-            self = .list(selectedId: selectedId, expandedItems: expandedItems)
-            
+            self = try container.decodeValues(for: .list, into: ViewState.list)
             
 //            // decoding multiple values without using the extension to KeyedDecodingContainer
 //            var nestedContainer = try container.nestedUnkeyedContainer(forKey: .list)
@@ -116,9 +114,11 @@ extension KeyedEncodingContainer {
 }
 
 extension KeyedDecodingContainer {
-    func decodeValues<V1: Decodable, V2: Decodable>(for key: Key) throws -> (V1, V2) {
+    func decodeValues<V1: Decodable, V2: Decodable, Result>(
+        for key: Key, into makeResult: (V1, V2) -> Result
+    ) throws -> Result {
         var container = try self.nestedUnkeyedContainer(forKey: key)
-        return (
+        return makeResult(
             try container.decode(V1.self),
             try container.decode(V2.self)
         )
